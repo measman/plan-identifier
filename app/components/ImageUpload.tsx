@@ -1,28 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { FaUpload, FaCamera } from "react-icons/fa";
 
-const genAI = new GoogleGenerativeAI(
-  process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY!
-);
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY;
 
 export default function ImageUpload({ setPlantInfo, setImageUrl }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+  const handleImage = async (file) => {
     if (!file) return;
 
     setLoading(true);
     setError("");
 
     try {
+      if (!API_KEY) {
+        throw new Error("API key is not set");
+      }
+
+      const genAI = new GoogleGenerativeAI(API_KEY);
       const imageData = await readFileAsBase64(file);
       setImageUrl(URL.createObjectURL(file));
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+      });
 
       const result = await model.generateContent([
         "Identify this plant and provide the following information: " +
@@ -54,6 +61,20 @@ export default function ImageUpload({ setPlantInfo, setImageUrl }) {
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleImage(file);
+    }
+  };
+
+  const handleCameraCapture = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      handleImage(file);
+    }
+  };
+
   const readFileAsBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -64,21 +85,41 @@ export default function ImageUpload({ setPlantInfo, setImageUrl }) {
   };
 
   return (
-    <div className='mb-8'>
-      <label
-        htmlFor='image-upload'
-        className='bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full cursor-pointer transition-colors text-lg'
-      >
-        {loading ? "Analyzing..." : "📷 Upload Plant Image"}
-      </label>
+    <div className='mb-8 flex flex-col items-center'>
+      <div className='flex space-x-4 mb-4'>
+        <button
+          onClick={() => fileInputRef.current.click()}
+          className='bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full cursor-pointer transition-colors text-lg flex items-center'
+          disabled={loading}
+        >
+          <FaUpload className='mr-2' /> Upload Image
+        </button>
+        <button
+          onClick={() => cameraInputRef.current.click()}
+          className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full cursor-pointer transition-colors text-lg flex items-center'
+          disabled={loading}
+        >
+          <FaCamera className='mr-2' /> Take Photo
+        </button>
+      </div>
       <input
-        id='image-upload'
+        ref={fileInputRef}
         type='file'
         accept='image/*'
-        onChange={handleImageUpload}
+        onChange={handleFileUpload}
         className='hidden'
         disabled={loading}
       />
+      <input
+        ref={cameraInputRef}
+        type='file'
+        accept='image/*'
+        capture='environment'
+        onChange={handleCameraCapture}
+        className='hidden'
+        disabled={loading}
+      />
+      {loading && <p className='text-gray-600'>Analyzing image...</p>}
       {error && <p className='text-red-500 mt-2'>{error}</p>}
     </div>
   );

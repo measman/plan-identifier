@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import ImageUpload from "./components/ImageUpload";
 import PlantInfo from "./components/PlantInfo";
 import { FaUpload, FaLeaf, FaInfoCircle, FaSeedling } from "react-icons/fa";
@@ -17,13 +16,22 @@ export default function Home() {
           Plant Identifier
         </h1>
         <p className='text-xl text-green-700 mb-8 text-center max-w-2xl mx-auto'>
-          Discover the wonders of nature! Upload an image of a plant, and let
-          our AI identify it for you.
+          Discover the wonders of nature! Upload an image or take a photo of a
+          plant, and let our AI identify it for you.
         </p>
         <div className='flex justify-center mb-12'>
           <ImageUpload setPlantInfo={setPlantInfo} setImageUrl={setImageUrl} />
         </div>
-
+        {plantInfo && imageUrl && (
+          <div className='flex justify-center mt-12'>
+            <PlantInfo info={plantInfo} imageUrl={imageUrl} />
+          </div>
+        )}
+        {(!plantInfo || !imageUrl) && (
+          <p className='text-gray-600 mt-4 text-center'>
+            Upload an image or take a photo to see plant information.
+          </p>
+        )}
         {/* How to Use Section */}
         <div className='mb-12'>
           <h2 className='text-3xl font-bold mb-4 text-green-800 text-center'>
@@ -73,17 +81,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-
-        {plantInfo && imageUrl && (
-          <div className='flex justify-center'>
-            <PlantInfo info={plantInfo} imageUrl={imageUrl} />
-          </div>
-        )}
-        {(!plantInfo || !imageUrl) && (
-          <p className='text-gray-600 mt-4 text-center'>
-            Upload an image to see plant information.
-          </p>
-        )}
       </div>
     </div>
   );
